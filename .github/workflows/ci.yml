@@ -1,0 +1,153 @@
+name: 🛞 continuous-integration
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  GH_E2E_user: cangulo-ctv-e2e-test[bot]
+  GH_E2E_email: cangulo-ctv-e2e-test[bot]@users.noreply.github.com
+
+jobs:
+  validate-tickets:
+    name: validate tickets using current branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tickets using current branch
+        uses: ./
+        id: validate-tickets
+        with:
+          configuration: tickets-config.yml
+
+  get-changes:
+    name: 🔎 Get Changes
+    uses: ./.github/workflows/shared-get-changes.yml
+
+  lint-code:
+    name: 🕺 Lint Code
+    needs: get-changes
+    if: needs.get-changes.outputs.js-modified == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: install packages
+        run: npm install --only=dev
+
+      - name: validate code style (eslint)
+        run: npm run lint
+
+      - name: explain how to fix code style
+        if: failure()
+        env:
+          ESLINT_TUTORIAL: https://mojitocoder.medium.com/how-to-add-code-linting-for-a-node-js-project-b210d8759cd5
+        run: |
+          echo "# CI failed validating code style"    >> $GITHUB_STEP_SUMMARY
+          echo "To fix the code style, run:"          >> $GITHUB_STEP_SUMMARY
+          echo "npm run lint-fix"                     >> $GITHUB_STEP_SUMMARY
+          echo "[ESLINT Tutorial]($ESLINT_TUTORIAL)"  >> $GITHUB_STEP_SUMMARY
+
+  test-JS:
+    name: 🧪 JS Tests
+    needs: get-changes
+    if: needs.get-changes.outputs.js-modified == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: install packages
+        run: npm install
+
+      - name: run JS tests (UT and index.js)
+        run: npm run test
+
+      - name: Test Report
+        uses: dorny/test-reporter@86a20101473378575dcbaa709a4f2b772001fbbb
+        if: success() || failure()
+        with:
+          name: JS Tests # Name of the check run which will be created
+          path: reports/jest-*.xml
+          reporter: jest-junit
+
+  test-e2e:
+    name: ${{ matrix.scenario }}
+    needs: get-changes
+    if: needs.get-changes.outputs.action-modified == 'true' || needs.get-changes.outputs.e2e-tests-modified == 'true'
+    concurrency:  # concurrency set to avoid conflicts pushing to each repo
+      group: e2e-tests-${{ matrix.spec }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: "Default: Ticket Provided"
+            spec: cypress/e2e/ticket-provided.feature
+            key: ticket-provided
+
+    runs-on: ubuntu-latest
+    env:
+      GH_ORG: cangulo-actions-test
+      GH_REPO_TO_RUN_E2E: ctv-PR-${{ github.event.number }}-${{ matrix.key }}
+    steps:
+      - name: Checkout semver repository
+        uses: actions/checkout@v4.1.1
+
+      - name: 🧹 delete any temporary repository
+        uses: ./.github/actions/delete-temp-repos
+        with:
+          org: ${{ env.GH_ORG }}
+          repo: ${{ env.GH_REPO_TO_RUN_E2E }}
+          gh-token: ${{ secrets.CANGULO_BOT_DELETE_REPO }}
+
+      - name: 🧪 run cypress e2e tests
+        uses: cypress-io/github-action@v6.6.0
+        with:
+          spec: ${{ matrix.spec }}
+          working-directory: cypress
+          publish-summary: false
+        env:
+          CYPRESS_TEST_KEY: ${{ matrix.key }}
+          CYPRESS_GH_ORG: ${{ env.GH_ORG }}
+          CYPRESS_GH_TOKEN: ${{ secrets.CANGULO_BOT_MODIFY_GH_WORKFLOWS }}
+          CYPRESS_GH_API_URL: https://api.github.com
+          CYPRESS_WAIT_TIME_CI_WORKFLOW: 25000  # wait 25 seconds before checking the CD workflow
+          CYPRESS_API_RETRY_INTERVAL_MS: 10000  # retry every 10 seconds
+          CYPRESS_API_RETRY_TIMEOUT_MS: 40000   # timeout after 40 seconds of retry
+          CYPRESS_CC_BRANCH: ${{ github.head_ref }}
+          CYPRESS_CC_PR_NUMBER: ${{ github.event.number }}
+          CYPRESS_GH_USER_NAME: ${{ env.GH_E2E_user }}
+          CYPRESS_GH_USER_EMAIL: ${{ env.GH_E2E_email }}
+
+      - name: Print link to the repo
+        uses: actions/github-script@v7.0.1
+        if: failure()
+        env:
+          OWNER: ${{ env.GH_ORG }}
+          REPO: ${{ env.GH_REPO_TO_RUN_E2E }}
+          TEST_SCENARIO: ${{ matrix.scenario }}
+          TEST_SPEC: ${{ matrix.spec }}
+        with:
+          script: |
+            const owner     = process.env.OWNER
+            const repo      = process.env.REPO
+            const scenario  = process.env.TEST_SCENARIO
+            const spec      = process.env.TEST_SPEC
+            const linkRepo  = `https://github.com/${owner}/${repo}/actions`
+
+            core
+              .summary
+              .addHeading(`🛑⚠️ Failed test for '${scenario}' (${spec})`)
+              .addLink(`Link to ${owner}/${repo} repo`, linkRepo)
+              .write()
+
+      - name: 🧹 delete any temporary repository
+        uses: ./.github/actions/delete-temp-repos
+        with:
+          org: ${{ env.GH_ORG }}
+          repo: ${{ env.GH_REPO_TO_RUN_E2E }}
+          gh-token: ${{ secrets.CANGULO_BOT_DELETE_REPO }}

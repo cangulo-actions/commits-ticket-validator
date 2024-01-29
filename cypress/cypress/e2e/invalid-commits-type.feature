@@ -1,0 +1,29 @@
+Feature: Reject commits with invalid type
+
+  Background: The gh action runs with the default configuration
+    Given I create a repository named "cc-PR-{PR_NUMBER}-{TEST_KEY}"
+    And I push the file ".github/workflows/cc-test.yml" to the branch "main" with the content:
+      """
+      name: cangulo-actions/conventional-commits-validator test
+      on:
+        pull_request: 
+          branches:
+            - main
+      
+      jobs:
+        validate-commits:
+          name: Validate Commits
+          runs-on: ubuntu-latest
+          permissions:
+            contents: read
+            pull-requests: read
+          steps:
+            - name: Validate Conventional Commits
+              uses: cangulo-actions/conventional-commits-validator@<TARGET_BRANCH>
+      """
+
+  Scenario: Commit with invalid type
+    Given I create a branch named "invalid-commits-type"
+    And I commit "fix2: commit that fixes something" modifying the file "src/lambda1.py"
+    When I create a PR with title "invalid-commits: wrong commit type"
+    Then the workflow "cangulo-actions/conventional-commits-validator test" must conclude in "failure"

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../config.schema.yml
+
+tickets:
+  - name: GH Issues
+    pattern: '#(\d+)'
+    url: https://github.com/cangulo-actions/commits-ticket-validator/issues/$TICKET
+  - name: payments projects
+    pattern: 'PAY-\d+'
+    url: https://cangulo.atlassian.net/browse/$TICKET
+  - name: cangulo blog
+    pattern: '[A-Z]{4}-\d+'
+    url: https://cangulo.atlassian.net/browse/$TICKET
