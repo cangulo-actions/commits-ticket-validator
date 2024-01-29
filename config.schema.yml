@@ -1,0 +1,31 @@
+type: object
+properties:
+  tickets:
+    type: array
+    default: []
+    description: Tickets configuration list
+    uniqueItems: true
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          description: |
+            Name for this ticket configuration.
+            Example: `GH Issues for cangulo-actions/commits-ticket-validator`
+        pattern:
+          type: string
+          description: |
+            The regex to match tickets key in the commit message. 
+            Example: `#\d+$`
+        url:
+          type: string
+          description: |
+            The ticket URL with $TICKET as a placeholder. 
+            Example: https://github.com/cangulo-actions/commits-ticket-validator/issues/$TICKET
+      required:
+        - name
+        - pattern
+        - url
+required:
+  - tickets

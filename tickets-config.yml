@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=./config.schema.yml
+
+tickets:
+  - name: GH Issues
+    pattern: '#(\d+)'
+    url: https://github.com/cangulo-actions/commits-ticket-validator/issues/$TICKET

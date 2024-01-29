@@ -1,0 +1,61 @@
+[
+    {
+        "enabled": true,
+        "scenario": "No ticket provided",
+        "configuration": "tests/functions/test.data.custom-config.yml",
+        "commitMsg": "updated readme",
+        "result": []
+    },
+    {
+        "enabled": true,
+        "scenario": "One ticket provided with format ABC-123",
+        "configuration": "tests/functions/test.data.custom-config.yml",
+        "commitMsg": "fix: PAY-234 fixed error in payment service",
+        "result": [
+            {
+                "name": "PAY-234",
+                "link": "https://cangulo.atlassian.net/browse/PAY-234"
+            }
+        ]
+    },
+    {
+        "enabled": true,
+        "scenario": "One GH issue provided with format #123",
+        "configuration": "tests/functions/test.data.custom-config.yml",
+        "commitMsg": "fix: #123 solved error related to GH issue 123",
+        "result": [
+            {
+                "name": "123",
+                "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
+            }
+        ]
+    },
+    {
+        "enabled": true,
+        "scenario": "Two tickets provided",
+        "configuration": "tests/functions/test.data.custom-config.yml",
+        "commitMsg": "fix: #123 solved error related to GH issue 123 and also finished #332",
+        "result": [
+            {
+                "name": "123",
+                "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
+            },
+            {
+                "name": "332",
+                "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/332"
+            }
+        ]
+    },
+    {
+        "enabled": true,
+        "scenario": "same ticket provided twice",
+        "configuration": "tests/functions/test.data.custom-config.yml",
+        "commitMsg": "fix: #123 solved error related to GH issue 123 and also finished #123",
+        "result": [
+            {
+                "name": "123",
+                "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
+            }
+        ]
+    }
+]

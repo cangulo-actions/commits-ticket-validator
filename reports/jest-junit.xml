@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="5" failures="0" errors="0" time="0.428">
+  <testsuite name="tests/functions/parse-tickets.test.js" errors="0" failures="0" skipped="0" timestamp="2024-01-29T22:46:26" time="0.396" tests="5">
+    <testcase classname="index.js Happy Paths" name="No ticket provided" time="0.003">
+    </testcase>
+    <testcase classname="index.js Happy Paths" name="One ticket provided with format ABC-123" time="0.001">
+    </testcase>
+    <testcase classname="index.js Happy Paths" name="One GH issue provided with format #123" time="0.001">
+    </testcase>
+    <testcase classname="index.js Happy Paths" name="Two tickets provided" time="0">
+    </testcase>
+    <testcase classname="index.js Happy Paths" name="same ticket provided twice" time="0.001">
+    </testcase>
+  </testsuite>
+</testsuites>

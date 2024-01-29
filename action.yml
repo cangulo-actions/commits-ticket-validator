@@ -1,0 +1,134 @@
+name: "🚔️ Tickets Validation"
+description: "Validate Tickets provided in the commit messages"
+inputs:
+  configuration:
+    description: "path to the YML configuration"
+    required: true
+
+outputs:
+  tickets:
+    value: ${{ steps.parse-tickets.outputs.tickets }}
+    description: "tickets found in the commits. JSON array in format [{name, link, commitId, commitUrl}]"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate Context and squashed commit received
+      uses: actions/github-script@v7
+      with:
+        script: |
+          if (context.eventName !== 'pull_request') {
+              throw new Error(`This GH action only supports pull_request events.`)
+          }
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm install --omit=dev
+
+    - name: Process configuration
+      uses: actions/github-script@v7
+      id: config
+      env:
+        INPUT_CONFIG: ${{ inputs.configuration }}
+        NODE_MODULES_PATH: ${{ github.action_path }}/node_modules
+        SCHEMA: ${{ github.action_path }}/config.schema.yml
+      with:
+        script: |
+          const yml = require(`${process.env.NODE_MODULES_PATH}/js-yaml`)
+          const Ajv = require(`${process.env.NODE_MODULES_PATH}/ajv`)
+          const fs  = require('fs')
+
+          const schemaPath    = process.env.SCHEMA
+          const inputConfig   = process.env.INPUT_CONFIG
+          const schemaContent = fs.readFileSync(schemaPath)
+          const schema        = yml.load(schemaContent)
+          let   config        = {}
+
+          if(inputConfig !== '') {
+            const configPath    = inputConfig
+            const configContent = fs.readFileSync(configPath)
+            config              = yml.load(configContent)
+          }
+
+          const ajv       = new Ajv({ useDefaults: true })  // add default values to the config properties
+          const validate  = ajv.compile(schema)
+          const valid     = validate(config)                // from now on config includes any missing default values
+
+          if (!valid) {
+            const errorsJson = JSON.stringify(validate.errors, null, 2)
+            core.setFailed(`configuration file is not valid: ${errorsJson}`)
+          }
+
+          core.startGroup('Configuration')
+          console.log('config:', JSON.stringify(config, null, 2))
+          core.endGroup()
+
+
+          core.setOutput('config', config)
+
+    - name: Get commit messages
+      uses: actions/github-script@v7
+      id: get-commits
+      with:
+        script: |
+          const commitListResponse = await github.rest.pulls.listCommits({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number
+          })
+
+          const commits = await Promise.all(commitListResponse.data.map(async commit => {            
+            return {
+              id: commit.sha,
+              message: commit.commit.message,
+              url: commit.html_url
+            }
+          }));
+
+          core.startGroup('Commits')
+          console.log('commits', commits)
+          core.endGroup()
+
+          core.setOutput('commits', commits)
+
+    - name: Parse tickets
+      uses: actions/github-script@v7
+      id: parse-tickets
+      env:
+        CONFIG: ${{ steps.config.outputs.config }}
+        COMMITS: ${{ steps.get-commits.outputs.commits }}
+      with:
+        script: |
+          const { parseTickets } = require('${{ github.action_path }}/functions/parse-tickets')
+          const commits         = JSON.parse(process.env.COMMITS)
+          const conf            = JSON.parse(process.env.CONFIG)
+
+          const result = commits
+            .map(x => {
+                const commit = { ...x }
+                commit.tickets = parseTickets(conf.tickets, x.message)
+                return commit
+            })
+
+          core.startGroup('Tickets per commit')
+          console.log('tickets:', JSON.stringify(result, null, 2))
+          core.endGroup()
+
+          const commitsWithoutTicket = result.filter(x => x.tickets.length === 0)
+          if (commitsWithoutTicket.length > 0) {
+            core.summary
+              .addHeading('🛑 Next commits do not have any ticket:')
+              .addCodeBlock(JSON.stringify(commitsWithoutTicket, null, 2)  , 'json')
+              .addSeparator()
+              .addHeading('Configuration:')
+              .addCodeBlock(JSON.stringify(conf, null, 2), 'json')
+              .write()
+            core.setFailed('No tickets found for some commits.')
+          }
+
+          core.setOutput('tickets', result)
+
+
+# refresh 20240112-1
