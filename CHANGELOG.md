@@ -1,3 +1,8 @@
+# 0.0.2 fix: add E2E test for commits without ticket. Fixes #4 (#5)
+
+## patches:
+* fix: add E2E test for commits without ticket. Fixes #4 (#5)
+
 # 0.0.1 fix: #1 allow user to provide tickets configuration through YML. Fixes #1 (#3)
 
 ## patches:
