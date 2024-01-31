@@ -4,6 +4,10 @@ inputs:
   configuration:
     description: "path to the YML configuration"
     required: true
+  print-summary:
+    description: 'flag for printing tickets in the GH action summary'
+    required: true
+    default: 'false'
 
 outputs:
   tickets:
@@ -130,5 +134,40 @@ runs:
 
           core.setOutput('tickets', result)
 
+    - name: printing summary
+      if: ${{ inputs.print-summary == 'true' }}
+      uses: actions/github-script@v7
+      env:
+        TICKETS_PER_COMMIT: ${{ steps.parse-tickets.outputs.tickets }}
+      with:
+        script: |
+          const ticketsPerCommit  = JSON.parse(process.env.TICKETS_PER_COMMIT)
+          const tickets           = ticketsPerCommit.flatMap(x => x.tickets.map(ticket => ({
+            commitId: x.id,
+            commitUrl: x.url,
+            commitMsg: x.message,
+            ticket: ticket.name,
+            link: ticket.link
+          })))
+          
+          const tableHeader = [
+            {data: 'ticket', header: true},
+            {data: 'commitMsg', header: true},
+            {data: 'commitId', header: true}
+          ]
+          const tableRow    = tickets.map(x => 
+            [ 
+              `<a href="${x.link}">${x.ticket}</a>`,
+              x.commitMsg,
+              `<a href="${x.commitUrl}">${x.commitId}</a>`
+            ]
+          )
+
+          const table = [tableHeader, ...tableRow]
+
+          core.summary
+            .addHeading('🎫 Tickets')
+            .addTable(table)
+            .write()
 
 # refresh 20240112-1
