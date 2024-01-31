@@ -89,6 +89,10 @@ jobs:
             spec: cypress/e2e/ticket-provided.feature
             key: ticket-provided
 
+          - scenario: "Default: No ticket Provided"
+            spec: cypress/e2e/no-ticket-provided.feature
+            key: no-ticket-provided
+
     runs-on: ubuntu-latest
     env:
       GH_ORG: cangulo-actions-test
