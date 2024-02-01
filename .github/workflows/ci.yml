@@ -97,6 +97,10 @@ jobs:
             spec: cypress/e2e/feat-print-summary.feature
             key: feat-print-summary
 
+          - scenario: "Feat: label PR"
+            spec: cypress/e2e/feat-label-pr.feature
+            key: feat-label-pr
+
     runs-on: ubuntu-latest
     env:
       GH_ORG: cangulo-actions-test
