@@ -93,6 +93,10 @@ jobs:
             spec: cypress/e2e/no-ticket-provided.feature
             key: no-ticket-provided
 
+          - scenario: "Feat: Print Summary"
+            spec: cypress/e2e/feat-print-summary.feature
+            key: feat-print-summary
+
     runs-on: ubuntu-latest
     env:
       GH_ORG: cangulo-actions-test
