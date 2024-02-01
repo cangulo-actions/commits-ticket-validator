@@ -26,6 +26,7 @@
         "result": [
             {
                 "name": "123",
+                "fullMatch": "#123",
                 "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
             }
         ]
@@ -38,10 +39,12 @@
         "result": [
             {
                 "name": "123",
+                "fullMatch": "#123",
                 "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
             },
             {
                 "name": "332",
+                "fullMatch": "#332",
                 "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/332"
             }
         ]
@@ -54,6 +57,7 @@
         "result": [
             {
                 "name": "123",
+                "fullMatch": "#123",
                 "link": "https://github.com/cangulo-actions/commits-ticket-validator/issues/123"
             }
         ]
