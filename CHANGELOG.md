@@ -1,3 +1,8 @@
+# 0.2.0 feat: added feature to label PR with tickets. Fixes #2 (#9)
+
+## new features:
+* feat: added feature to label PR with tickets. Fixes #2 (#9)
+
 # 0.1.0 feat: added feature to print tickets summary. Fixes #6 (#7)
 
 ## new features:
