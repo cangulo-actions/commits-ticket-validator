@@ -1,0 +1,26 @@
+---
+name: 🔎 Code Scanning - Scorecard supply-chain security
+# Copied: https://github.com/cangulo-actions/github-workflows-templates/blob/main/templates/scorecard.yml
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: "17 3 * * 6"
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: scoreboard-${{ github.head_ref  || github.ref_name }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: 💿️ Scorecard analysis
+    permissions:
+      security-events: write
+      id-token: write
+    uses: cangulo-actions/github-workflows-templates/.github/workflows/scorecard.yml@main
