@@ -1,0 +1,28 @@
+---
+name: 🔎 Lint
+# Copied: https://github.com/cangulo-actions/github-workflows-templates/blob/main/templates/linter.yml
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: lint-PR-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  lint:
+    name: 🔎 Lint
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+    uses: cangulo-actions/github-workflows-templates/.github/workflows/linter.yml@main
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+    secrets: inherit # Requires access to secret.GITHUB_TOKEN to report status checks
